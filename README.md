@@ -1,4 +1,3 @@
-AWS-stuff
-=========
+A collection of more or less helpful scripts around Amazon Web Services (AWS).
 
-AWS-related scripts and stuff.
+Refer to the comment at the top of each script for a short description.
