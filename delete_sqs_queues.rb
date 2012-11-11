@@ -56,6 +56,7 @@ reference_timestamp = DateTime.strptime(options[:reference_time],
 
 sqs = AWS::SQS.new
 
+deleted_queues = 0
 sqs.queues.with_prefix(options[:queue_prefix]).each_batch do |queue_batch|
   puts "About to process #{queue_batch.size} queues ..."
   queue_batch.each do |queue|
@@ -65,8 +66,11 @@ sqs.queues.with_prefix(options[:queue_prefix]).each_batch do |queue_batch|
       if q_last_modified_timestamp < reference_timestamp.to_time
         print "Deleting #{queue.url} (last modified at #{queue.last_modified_timestamp})..."
         queue.delete
+        deleted_queues += 1
         puts 'done.'
       end
     end
   end
 end
+puts "Deleted queues matching the critera: #{deleted_queues}."
+puts "Criteria:\n\tQueue prefix: #{options[:queue_prefix]}\n\tLast modified before: #{reference_timestamp.to_s}"
