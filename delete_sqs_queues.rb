@@ -56,21 +56,28 @@ reference_timestamp = DateTime.strptime(options[:reference_time],
 
 sqs = AWS::SQS.new
 
-deleted_queues = 0
-sqs.queues.with_prefix(options[:queue_prefix]).each_batch do |queue_batch|
-  puts "About to process #{queue_batch.size} queues ..."
-  queue_batch.each do |queue|
-    queue.inspect
-    if !queue.nil? and !queue.url.nil? and queue.exists?
-      q_last_modified_timestamp = queue.last_modified_timestamp
-      if q_last_modified_timestamp < reference_timestamp.to_time
-        print "Deleting #{queue.url} (last modified at #{queue.last_modified_timestamp})..."
-        queue.delete
-        deleted_queues += 1
-        puts 'done.'
+deleted_queues_per_batch = 0
+sum_deleted_queues = 0
+begin
+  deleted_queues_per_batch = 0
+  sqs.queues.with_prefix(options[:queue_prefix]).each_batch do |queue_batch|
+    puts "About to process #{queue_batch.size} queues in this batch ..."
+    queue_batch.each do |queue|
+      #queue.inspect
+      if !queue.nil? and !queue.url.nil? and queue.exists?
+        q_last_modified_timestamp = queue.last_modified_timestamp
+        if q_last_modified_timestamp < reference_timestamp.to_time
+          print "Deleting #{queue.url} (last modified at #{queue.last_modified_timestamp})..."
+          queue.delete
+          deleted_queues_per_batch += 1
+          puts 'done.'
+        end
       end
+      puts "#{deleted_queues_per_batch} queues deleted in this batch up to now." if deleted_queues_per_batch % 50 == 0
     end
   end
-end
-puts "Deleted queues matching the critera: #{deleted_queues}."
+  puts "Totally deleted queues in this batch: #{deleted_queues_per_batch}."
+  sum_deleted_queues += deleted_queues_per_batch
+end until deleted_queues_per_batch == 0
+puts "Totally deleted queues matching the critera in all batches: #{sum_deleted_queues}."
 puts "Criteria:\n\tQueue prefix: #{options[:queue_prefix]}\n\tLast modified before: #{reference_timestamp.to_s}"
