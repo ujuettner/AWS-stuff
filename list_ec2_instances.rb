@@ -59,7 +59,7 @@ region_list.each do |region|
                      else "\033[0m"
                      end
     puts "\t#{instance.id} (DNS: #{instance.dns_name}, IP: #{instance.ip_address}): #{color_sequence}#{status}\033[0m"
-    image = ec2.images[instance.image_id]
+    image = ec2.regions[region].images[instance.image_id]
     if image.exists?
       puts "\t\t#{image.description} (#{image.architecture}, #{image.virtualization_type}@#{image.hypervisor})"
     else
