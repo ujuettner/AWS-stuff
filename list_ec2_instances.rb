@@ -47,7 +47,7 @@ if options[:region].empty?
 else
   region_list = [options[:region]]
 end
-puts "Region list: #{region_list.join(' ')}"
+puts "Region list: #{region_list.join(' ')}."
 region_list.each do |region|
   puts "Region #{region}:"
   ec2.regions[region].instances.each do |instance|

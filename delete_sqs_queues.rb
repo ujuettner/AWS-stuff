@@ -34,7 +34,7 @@ OptionParser.new do |opts|
 
   options[:reference_time] = (Time.now. - 60*60*24).to_s
   opts.on('-t', '--reference-time TIMESTAMP',
-    "Reference time, delete queues older than that (default: #{options[:reference_time]})") do |t|
+    "reference time, delete queues older than that (default: #{options[:reference_time]})") do |t|
     options[:reference_time] = t
   end
 end.parse!
@@ -48,8 +48,8 @@ end
 aws_config = YAML.load(File.read(aws_config_file))
 AWS.config(aws_config)
 
-puts "Queue prefix: #{options[:queue_prefix]}"
-puts "Reference time: #{options[:reference_time]}"
+puts "Queue prefix: #{options[:queue_prefix]}."
+puts "Reference time: #{options[:reference_time]}."
 
 reference_timestamp = DateTime.strptime(options[:reference_time],
                                         '%Y-%m-%d %H:%M:%S %z')
