@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 #
-# This script gathers some information about CEC2 instances..
+# This script terminates SWF workflow executions in a given domain.
 #
 # The AWS SDK for Ruby is required. See https://aws.amazon.com/sdkforruby/ for
 # installation instructions.
