@@ -48,10 +48,14 @@ domain = swf.domains[options[:domain]]
 
 deleted_workflows = 0
 domain.workflow_executions.each do |wf_execution|
-  wf_id = wf_execution.workflow_id
-  print "Terminating workflow execution of #{wf_id}..."
-  wf_execution.terminate(options = {:child_policy => :terminate})
-  puts 'done.'
-  deleted_workflows += 1
+  begin
+    wf_id = wf_execution.workflow_id
+    print "Terminating workflow execution of #{wf_id}..."
+    wf_execution.terminate(options = {:child_policy => :terminate})
+    puts 'done.'
+    deleted_workflows += 1
+  rescue Exception
+    puts 'Got an exception - ignoring it.'
+  end
 end
 puts "Terminated workflow executions in domain #{options[:domain]}: #{deleted_workflows}."

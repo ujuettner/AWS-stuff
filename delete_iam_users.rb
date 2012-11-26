@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 #
-# This script deletes IAM users whose name matches a given regular expression.
+# This script deletes IAM users, whose name matches a given regular expression,
+# incl. its profiles, mfa devices, keys and certs and removing it from all
+# groups.
 #
 # The AWS SDK for Ruby is required. See https://aws.amazon.com/sdkforruby/ for
 # installation instructions.
@@ -40,17 +42,17 @@ end
 aws_config = YAML.load(File.read(aws_config_file))
 AWS.config(aws_config)
 
-puts "Regular expression for user name: #{options[:regex_for_name]}."
+puts "Regular expression for user name: #{options[:regex_for_name]}"
 
 iam = AWS::IAM.new
 
 summary = iam.account_summary
-puts "Current number of IAM users: #{summary[:users]}."
+puts "Current number of IAM users: #{summary[:users]}"
 iam.users.each do |user|
   if user.name =~ /#{options[:regex_for_name]}/
-    print "Deleting user #{user.name} (ARN: #{user.arn})..."
-    #user.delete!
+    print "Deleting user #{user.name} (ARN: #{user.arn}) incl. its profiles, mfa devices, keys and certs and removing it from all groups..."
+    user.delete!
     puts 'done.'
   end
 end
-puts "Current number of IAM users: #{summary[:users]}."
+puts "Current number of IAM users: #{summary[:users]}"
