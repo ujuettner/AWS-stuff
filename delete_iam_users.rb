@@ -55,4 +55,3 @@ iam.users.each do |user|
     puts 'done.'
   end
 end
-puts "Current number of IAM users: #{summary[:users]}"
