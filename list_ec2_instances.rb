@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 #
-# This script gathers some information about EC2 instances..
+# This script gathers some information about EC2 instances.
 #
 # The AWS SDK for Ruby is required. See https://aws.amazon.com/sdkforruby/ for
 # installation instructions.
