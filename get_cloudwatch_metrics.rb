@@ -33,9 +33,21 @@ OptionParser.new do |opts|
   end
 
   options[:dimension_name] = 'Test'
-  opts.on('-d', '--dimension-name',
+  opts.on('-d', '--dimension-name DIMENSION_NAME',
     "name of the dimension to use (default: #{options[:dimension_name]})") do |dn|
     options[:dimension_name] = dn
+  end
+
+  options[:dimension_value] = 'Test'
+  opts.on('-v', '--dimension-value DIMENSION_VALUE',
+    "value of the dimension to use (default: #{options[:dimension_value]})") do |dv|
+    options[:dimension_value] = dv
+  end
+
+  options[:metric_name] = 'Test'
+  opts.on('-m', '--metric-name METRIC_NAME',
+    "name of the metric to query (default: #{options[:metric_name]})") do |m|
+    options[:metric_name] = m
   end
 
   options[:statistics_type] = 'Average'
@@ -60,8 +72,8 @@ end
 aws_config = YAML.load(File.read(aws_config_file))
 AWS.config(aws_config)
 
-start_time = Time.now - options[:seconds_back]
-end_time = Time.now
+start_time = Time.now.utc - options[:seconds_back]
+end_time = Time.now.utc
 
 unless statistics_types.include?(options[:statistics_type])
   puts "Statistics type #{options[:statistics_type]} not supported - use one of the following: #{statistics_types.join(', ')}."
@@ -69,22 +81,26 @@ unless statistics_types.include?(options[:statistics_type])
 end
 
 puts "Namespace: #{options[:namespace]}"
+puts "Dimension name: #{options[:dimension_name]}"
+puts "Dimension value: #{options[:dimension_value]}"
+puts "Metric name: #{options[:metric_name]}"
+puts "Statistics type: #{options[:statistics_type]}"
 puts "Start time: #{start_time}"
 puts "End time: #{end_time}"
-puts "Statistics type: #{options[:statistics_type]}"
 
 cw = AWS::CloudWatch.new
 
-cw.metrics.filter('namespace', options[:namespace]).each do |metric|
-#cw.metrics.each do |metric|
-  puts "metric_name: #{metric.metric_name} - namespace: #{metric.namespace}"
-  metric.dimensions.each do |dimension|
-    puts "name: #{dimension[:name]} - value: #{dimension[:value]}"
+metrics = cw.metrics.with_namespace(options[:namespace])
+filtered_metrics = metrics.with_dimension(options[:dimension_name], options[:dimension_value]).with_metric_name(options[:metric_name])
+filtered_metrics.each do |metric|
+  stats = metric.statistics(:start_time => start_time,
+                            :end_time => end_time,
+                            :statistics => [options[:statistics_type]])
+  if !stats.metric.dimensions.empty? and stats.first
+    dimensions_info = stats.metric.dimensions.map{|dim| "#{dim[:name]} => #{dim[:value]}" }.join(', ')
+    puts "#{stats.metric.namespace} | #{dimensions_info} | #{stats.metric.metric_name}:"
+    stats.sort{|a, b| a[:timestamp] <=> b[:timestamp]}.each do |datapoint|
+      puts "\t#{datapoint}"
+    end
   end
-  #stats = metric.statistics(:start_time => start_time,
-  #                          :end_time => end_time,
-  #                          :statistics => [options[:statistics_types]])
-  #stats.each do |datapoint|
-  #  puts "datapoint: #{datapoint}"
-  #end
 end
