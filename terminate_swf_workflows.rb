@@ -10,39 +10,22 @@
 # secret_access_key: <your secret access key>
 #
 
-require 'optparse'
-require 'yaml'
-require 'aws-sdk'
+require File.expand_path(File.join(File.dirname(__FILE__), 'lib', 'aws_config'))
 
 options = {}
-OptionParser.new do |opts|
-  opts.banner = "Usage: #{File.basename($0)} [options]"
-
-  options[:aws_config_file] = './aws_config.yml'
-  opts.on('-c', '--aws-config FILENAME',
-    "AWS config file (default: #{options[:aws_config_file]})") do |c|
-    options[:aws_config_file] = c
-  end
-
-  options[:domain] = 'my-domain'
-  opts.on('-d', '--domain DOMAIN',
-    "SWF domain (default: #{options[:domain]})") do |d|
-    options[:domain] = d
-  end
-end.parse!
-
-puts "Using #{options[:aws_config_file]}."
-aws_config_file = options[:aws_config_file]
-unless File.exist?(aws_config_file)
-  puts "#{aws_config_file} does not exist!"
-  exit 1
+option_parser = add_default_options(options)
+options[:domain] = 'my-domain'
+option_parser.on('-d', '--domain DOMAIN',
+  "SWF domain (default: #{options[:domain]})") do |d|
+  options[:domain] = d
 end
-aws_config = YAML.load(File.read(aws_config_file))
-AWS.config(aws_config)
+option_parser.parse!
 
-puts "Domain: #{options[:domain]}."
+exit 1 unless aws_config(options[:aws_config_file])
 
 swf = AWS::SimpleWorkflow.new
+
+puts "Domain: #{options[:domain]}"
 
 domain = swf.domains[options[:domain]]
 
@@ -58,4 +41,4 @@ domain.workflow_executions.each do |wf_execution|
     puts 'Got an exception - ignoring it.'
   end
 end
-puts "Terminated workflow executions in domain #{options[:domain]}: #{deleted_workflows}."
+puts "Terminated workflow executions in domain #{options[:domain]}: #{deleted_workflows}"

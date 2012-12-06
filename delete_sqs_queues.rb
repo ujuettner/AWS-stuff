@@ -12,49 +12,32 @@
 #
 
 require 'date'
-require 'optparse'
-require 'yaml'
-require 'aws-sdk'
+
+require File.expand_path(File.join(File.dirname(__FILE__), 'lib', 'aws_config'))
 
 options = {}
-OptionParser.new do |opts|
-  opts.banner = "Usage: #{File.basename($0)} [options]"
-
-  options[:aws_config_file] = './aws_config.yml'
-  opts.on('-c', '--aws-config FILENAME',
-    "AWS config file (default: #{options[:aws_config_file]})") do |c|
-    options[:aws_config_file] = c
-  end
-
-  options[:queue_prefix] = 'my-queue'
-  opts.on('-p', '--queue-prefix PREFIX',
-    "SQS queue prefix (default: #{options[:queue_prefix]})") do |p|
-    options[:queue_prefix] = p
-  end
-
-  options[:reference_time] = (Time.now. - 60*60*24).to_s
-  opts.on('-t', '--reference-time TIMESTAMP',
-    "reference time, delete queues older than that (default: #{options[:reference_time]})") do |t|
-    options[:reference_time] = t
-  end
-end.parse!
-
-puts "Using #{options[:aws_config_file]}."
-aws_config_file = options[:aws_config_file]
-unless File.exist?(aws_config_file)
-  puts "#{aws_config_file} does not exist!"
-  exit 1
+option_parser = add_default_options(options)
+options[:queue_prefix] = 'my-queue'
+option_parser.on('-p', '--queue-prefix PREFIX',
+  "SQS queue prefix (default: #{options[:queue_prefix]})") do |p|
+  options[:queue_prefix] = p
 end
-aws_config = YAML.load(File.read(aws_config_file))
-AWS.config(aws_config)
+options[:reference_time] = (Time.now. - 60*60*24).to_s
+option_parser.on('-t', '--reference-time TIMESTAMP',
+  "reference time, delete queues older than that (default: #{options[:reference_time]})") do |t|
+  options[:reference_time] = t
+end
+option_parser.parse!
+
+exit 1 unless aws_config(options[:aws_config_file])
+
+sqs = AWS::SQS.new
 
 puts "Queue prefix: #{options[:queue_prefix]}"
 puts "Reference time: #{options[:reference_time]}"
 
 reference_timestamp = DateTime.strptime(options[:reference_time],
                                         '%Y-%m-%d %H:%M:%S %z')
-
-sqs = AWS::SQS.new
 
 deleted_queues_per_batch = 0
 sum_deleted_queues = 0

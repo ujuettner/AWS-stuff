@@ -10,36 +10,18 @@
 # secret_access_key: <your secret access key>
 #
 
-require 'optparse'
-require 'yaml'
-require 'aws-sdk'
+require File.expand_path(File.join(File.dirname(__FILE__), 'lib', 'aws_config'))
 
 options = {}
-OptionParser.new do |opts|
-  opts.banner = "Usage: #{File.basename($0)} [options]"
-
-  options[:aws_config_file] = './aws_config.yml'
-  opts.on('-c', '--aws-config FILENAME',
-    "AWS config file (default: #{options[:aws_config_file]})") do |c|
-    options[:aws_config_file] = c
-  end
-
-  options[:region] = ''
-  opts.on('-r', '--region REGION',
-    "query just the specified region (default: query all regions)") do |r|
-    options[:region] = r
-  end
-end.parse!
-
-puts "Using #{options[:aws_config_file]}."
-aws_config_file = options[:aws_config_file]
-unless File.exist?(aws_config_file)
-  puts "#{aws_config_file} does not exist!"
-  exit 1
+option_parser = add_default_options(options)
+options[:region] = ''
+option_parser.on('-r', '--region REGION',
+  "query just the specified region (default: query all regions)") do |r|
+  options[:region] = r
 end
-aws_config = YAML.load(File.read(aws_config_file))
-AWS.config(aws_config)
+option_parser.parse!
 
+exit 1 unless aws_config(options[:aws_config_file])
 ec2 = AWS::EC2.new
 
 if options[:region].empty?

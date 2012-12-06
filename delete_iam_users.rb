@@ -12,39 +12,22 @@
 # secret_access_key: <your secret access key>
 #
 
-require 'optparse'
-require 'yaml'
-require 'aws-sdk'
+require File.expand_path(File.join(File.dirname(__FILE__), 'lib', 'aws_config'))
 
 options = {}
-OptionParser.new do |opts|
-  opts.banner = "Usage: #{File.basename($0)} [options]"
-
-  options[:aws_config_file] = './aws_config.yml'
-  opts.on('-c', '--aws-config FILENAME',
-    "AWS config file (default: #{options[:aws_config_file]})") do |c|
-    options[:aws_config_file] = c
-  end
-
-  options[:regex_for_name] = '\Atest-tmp-.*\Z'
-  opts.on('-r', '--regex-for-name REGEX',
-    "regular expression the user name must match (default: #{options[:regex_for_name]})") do |r|
-    options[:regex_for_name] = r
-  end
-end.parse!
-
-puts "Using #{options[:aws_config_file]}."
-aws_config_file = options[:aws_config_file]
-unless File.exist?(aws_config_file)
-  puts "#{aws_config_file} does not exist!"
-  exit 1
+option_parser = add_default_options(options)
+options[:regex_for_name] = '\Atest-tmp-.*\Z'
+option_parser.on('-r', '--regex-for-name REGEX',
+  "regular expression the user name must match (default: #{options[:regex_for_name]})") do |r|
+  options[:regex_for_name] = r
 end
-aws_config = YAML.load(File.read(aws_config_file))
-AWS.config(aws_config)
+option_parser.parse!
 
-puts "Regular expression for user name: #{options[:regex_for_name]}"
+exit 1 unless aws_config(options[:aws_config_file])
 
 iam = AWS::IAM.new
+
+puts "Regular expression for user name: #{options[:regex_for_name]}"
 
 summary = iam.account_summary
 puts "Current number of IAM users: #{summary[:users]}"
