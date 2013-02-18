@@ -21,9 +21,11 @@ exit 1 unless aws_config(options[:aws_config_file])
 db = AWS::DynamoDB.new
 
 db.tables.each do |table|
-  puts "Table: #{table.name}"
-  puts "\tread capacity: #{table.read_capacity_units}"
-  puts "\twrite capacity: #{table.write_capacity_units}"
-  puts "\t\tlast decreased at: #{table.throughput_last_decreased_at || 'never'}"
-  puts "\t\tlast increased at: #{table.throughput_last_increased_at || 'never'}"
+  print "Table: #{table.name} "
+  # takes a rather long time to return:
+  #print "items: #{table.items.count} "
+  print "read_capacity: #{table.read_capacity_units} "
+  print "write_capacity: #{table.write_capacity_units} "
+  print "last_decreased_at: #{table.throughput_last_decreased_at || 'never'} "
+  puts "last_increased_at: #{table.throughput_last_increased_at || 'never'}"
 end
